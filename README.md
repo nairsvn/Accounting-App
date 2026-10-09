@@ -2,7 +2,16 @@
 
 A single-file accounting app for **Odakkuzhal (Marol Malayali Samajam)**, Regd. No. F-16615 (Mumbai) under the Bombay Public Trusts Act, 1950.
 
-Open `index.html` in any browser (phone or laptop). No installation and no internet needed.
+## Two editions
+
+| | Cloud edition (recommended) | Offline edition |
+|---|---|---|
+| File | `cloud/odakkuzhal-books.html` | `index.html` |
+| Where it runs | Live at https://claude.ai/artifact/8puGb4PsEfet472fqjZ9dp (sign in to claude.ai) | Open the file in any browser |
+| Where entries are kept | Cloud database. Phone and laptop stay in sync live. | Only in that one browser |
+| Who can change entries | Only the owner (and anyone given Editor access) | Whoever has the device |
+
+The cloud edition stores the chart of accounts and opening balances in `books/config`, and each entry as one document in `txns/`. To change the live page, publish `cloud/odakkuzhal-books.html` to the same artifact URL.
 
 ## What it does
 
