@@ -1,0 +1,38 @@
+name: Daily backup
+
+# Every morning: read the books from Firestore and email a backup.
+# 00:30 UTC = 06:00 IST. GitHub may start scheduled runs a few minutes late.
+on:
+  schedule:
+    - cron: '30 0 * * *'
+  workflow_dispatch:   # "Run workflow" button on the Actions tab, for a test run
+
+permissions:
+  contents: read
+  actions: write       # only for the keep-alive step below
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install
+        run: npm install --no-save --no-audit --no-fund --prefix backup firebase-admin@12.7.0 nodemailer@6.9.16
+      - name: Back up and email
+        run: node backup/backup.mjs
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          MAIL_FROM: odakkuzhal.marol@gmail.com
+          MAIL_TO: odakkuzhal.marol@gmail.com
+      # GitHub switches off schedules in repos with no activity for 60 days.
+      # Re-enabling the workflow on each run keeps it alive.
+      - name: Keep the schedule alive
+        if: github.event_name == 'schedule'
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/daily-backup.yml/enable"
+        env:
+          GH_TOKEN: ${{ github.token }}
