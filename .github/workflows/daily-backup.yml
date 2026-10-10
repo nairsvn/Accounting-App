@@ -27,8 +27,8 @@ jobs:
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-          MAIL_FROM: odakkuzhal.marol@gmail.com
-          MAIL_TO: odakkuzhal.marol@gmail.com
+          MAIL_FROM: sree.vn@gmail.com
+          MAIL_TO: sree.vn@gmail.com
       # GitHub switches off schedules in repos with no activity for 60 days.
       # Re-enabling the workflow on each run keeps it alive.
       - name: Keep the schedule alive

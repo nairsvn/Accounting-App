@@ -22,9 +22,9 @@ Every change is recorded in an append-only **Change log** (who, what, when).
 - The Firebase web config in `index.html` is public by design; security comes from the rules.
 
 ### Daily email backup
-`.github/workflows/daily-backup.yml` runs `backup/backup.mjs` every day at about 06:00 IST (GitHub may start a few minutes late). It reads the books from Firestore and emails odakkuzhal.marol@gmail.com a JSON backup (restorable in the app via Heads & Backup → Import) and a CSV of all entries. It needs two repository secrets:
+`.github/workflows/daily-backup.yml` runs `backup/backup.mjs` every day at about 06:00 IST (GitHub may start a few minutes late). It reads the books from Firestore and emails sree.vn@gmail.com a JSON backup (restorable in the app via Heads & Backup → Import) and a CSV of all entries. It needs two repository secrets:
 - `FIREBASE_SERVICE_ACCOUNT` – contents of a Firebase service-account key file (Project settings → Service accounts → Generate new private key).
-- `GMAIL_APP_PASSWORD` – a Google App Password for odakkuzhal.marol@gmail.com (needs 2-Step Verification).
+- `GMAIL_APP_PASSWORD` – a Google App Password for sree.vn@gmail.com (needs 2-Step Verification).
 
 Test it any time from the Actions tab → Daily backup → Run workflow.
 
