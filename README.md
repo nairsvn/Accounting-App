@@ -2,16 +2,28 @@
 
 A single-file accounting app for **Odakkuzhal (Marol Malayali Samajam)**, Regd. No. F-16615 (Mumbai) under the Bombay Public Trusts Act, 1950.
 
-## Two editions
+## Live app
 
-| | Cloud edition (recommended) | Offline edition |
-|---|---|---|
-| File | `cloud/odakkuzhal-books.html` | `index.html` |
-| Where it runs | Live at https://claude.ai/artifact/8puGb4PsEfet472fqjZ9dp (sign in to claude.ai) | Open the file in any browser |
-| Where entries are kept | Cloud database. Phone and laptop stay in sync live. | Only in that one browser |
-| Who can change entries | Only the owner (and anyone given Editor access) | Whoever has the device |
+**https://nairsvn.github.io/Accounting-App/** – sign in with Google. Only Gmail addresses on the members list can open the books.
 
-The cloud edition stores the chart of accounts and opening balances in `books/config`, and each entry as one document in `txns/`. To change the live page, publish `cloud/odakkuzhal-books.html` to the same artifact URL.
+| Role | Can do |
+|---|---|
+| treasurer | Everything: entries, delete, opening balances, year-end, members, import |
+| editor | Add and edit entries (cannot delete) |
+| viewer | See books and statements |
+
+Every change is recorded in an append-only **Change log** (who, what, when).
+
+### How it is built
+- `index.html` – the whole app (no build step). Hosted on GitHub Pages from `main`.
+- Login: Firebase Authentication (Google). Data: Cloud Firestore, project `odakkuzhal-books`, region `asia-south1`.
+- Firestore layout: `members/{email}` (role), `books/config` (heads + opening balances), `txns/{id}` (one entry each, amounts in paise), `log/{id}` (change log).
+- `firestore.rules` – the access rules. Paste into Firebase console → Firestore Database → Rules → Publish whenever it changes.
+- The Firebase web config in `index.html` is public by design; security comes from the rules.
+
+### Other editions (kept for reference)
+- `cloud/odakkuzhal-books.html` – claude.ai artifact edition (https://claude.ai/artifact/8puGb4PsEfet472fqjZ9dp).
+- `offline.html` – single-browser edition, stores data in the browser only.
 
 ## What it does
 
