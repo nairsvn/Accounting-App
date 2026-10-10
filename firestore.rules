@@ -1,0 +1,39 @@
+rules_version = '2';
+// Odakkuzhal Accounts – paste into Firebase console → Firestore Database → Rules, then Publish.
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function email()     { return request.auth.token.email.lower(); }
+    function signedIn()  { return request.auth != null && request.auth.token.email_verified == true; }
+    function member()    { return signedIn() && exists(/databases/$(db)/documents/members/$(email())); }
+    function role()      { return get(/databases/$(db)/documents/members/$(email())).data.role; }
+    function editor()    { return member() && role() in ['treasurer', 'editor']; }
+    function treasurer() { return member() && role() == 'treasurer'; }
+    function validTxn(d) { return d.amount is number && d.amount > 0 && d.date is string && d.dr is string && d.cr is string; }
+
+    // Each person may read their own membership; members see the list; only the treasurer changes it.
+    match /members/{e} {
+      allow read: if member() || (signedIn() && e == email());
+      allow write: if treasurer();
+    }
+    // Chart of accounts and opening balances.
+    match /books/{d} {
+      allow read: if member();
+      allow write: if treasurer();
+    }
+    // Entries. Editors add and edit (stamped with their email); only the treasurer deletes.
+    match /txns/{id} {
+      allow read: if member();
+      allow create: if validTxn(request.resource.data) && request.resource.data.lastEditedBy == email()
+                    && (treasurer() || (editor() && request.resource.data.createdBy == email()));
+      allow update: if validTxn(request.resource.data) && request.resource.data.lastEditedBy == email()
+                    && (treasurer() || (editor() && request.resource.data.createdBy == resource.data.createdBy));
+      allow delete: if treasurer();
+    }
+    // Append-only change log: nobody can edit or erase it.
+    match /log/{id} {
+      allow read: if member();
+      allow create: if editor() && request.resource.data.by == email();
+      allow update, delete: if false;
+    }
+  }
+}

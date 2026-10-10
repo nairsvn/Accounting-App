@@ -1,0 +1,1051 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f5fa8">
+<title>Odakkuzhal Accounts</title>
+<style>
+/* Layout: sticky tab bar over a single centred working column; statements render as two-sided T-accounts. */
+:root{
+  --bg:#f5f6f8; --card:#ffffff; --ink:#1c2230; --muted:#5f6b80; --line:#dbe0e8;
+  --accent:#1f5fa8; --accent-ink:#ffffff; --in:#17794a; --out:#b3261e; --warn:#8a4f00; --warn-bg:#fff3dd;
+  --font-ui: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#13161b; --card:#1c2027; --ink:#e5e8ee; --muted:#9ba5b6; --line:#313744;
+    --accent:#77adff; --accent-ink:#0b1220; --in:#62d396; --out:#ff8a80; --warn:#ffbf5e; --warn-bg:#3a2c12;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--font-ui)}
+header{background:var(--card);border-bottom:1px solid var(--line);padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top,0px));display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center}
+header h1{margin:0;font-size:18px;text-wrap:balance}
+header .sub{color:var(--muted);font-size:12px}
+.who{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+.chip{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip.ok{color:var(--in);border-color:var(--in)}
+.chip.busy{color:var(--warn);border-color:var(--warn)}
+.chip.bad{color:var(--out);border-color:var(--out)}
+.chip.role{color:var(--accent);border-color:var(--accent);text-transform:capitalize}
+nav{display:flex;flex-wrap:wrap;gap:4px;padding:8px 16px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+nav button{border:1px solid var(--line);background:transparent;color:var(--ink);padding:6px 10px;border-radius:6px;cursor:pointer;font:inherit}
+nav button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+main{max-width:1100px;margin:0 auto;padding-block:16px;padding-inline:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px;min-width:0}
+.card h2{margin:0 0 10px;font-size:16px;text-wrap:balance}
+.card h3{margin:14px 0 6px;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
+.tile .k{color:var(--muted);font-size:12px}
+.tile .v{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 8px;width:100%}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.btn{border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);padding:7px 14px;border-radius:6px;cursor:pointer;font:inherit}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.danger{border-color:var(--out);background:transparent;color:var(--out)}
+.btn.sm{padding:3px 8px;font-size:12px}
+.btn[disabled]{opacity:.5;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:10px}
+.seg{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.seg button{border:1px solid var(--line);background:transparent;color:var(--ink);padding:6px 10px;border-radius:6px;cursor:pointer;font:inherit}
+.seg button.on{border-color:var(--accent);color:var(--accent);font-weight:600}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600}
+td.n,th.n{text-align:right;white-space:nowrap}
+td.d{white-space:nowrap}
+tr.tot td{font-weight:700;border-top:2px solid var(--ink)}
+tr.grp td{font-weight:600}
+td.ind{padding-left:22px}
+.in{color:var(--in)} .out{color:var(--out)} .muted{color:var(--muted)}
+.note{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:8px 10px;margin:0 0 12px;font-size:13px}
+.ok{color:var(--in);font-weight:600} .bad{color:var(--out);font-weight:600}
+.stmt-head{text-align:center;margin-bottom:8px}
+.stmt-head b{font-size:16px}
+.cols2{display:grid;grid-template-columns:1fr 1fr}
+.cols2>div{border:1px solid var(--line);min-width:0;overflow-x:auto}
+.cols2 table td,.cols2 table th{border-bottom:none}
+.help li{margin-bottom:6px}
+.small{font-size:12px}
+@media (max-width:760px){.cols2{grid-template-columns:1fr}}
+@media (max-width:600px){.vno{display:none}}
+.modal-back{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:16px;max-width:420px;width:100%;display:flex;flex-direction:column;gap:12px}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;z-index:30;max-width:calc(100% - 32px)}
+.empty{text-align:center;padding:32px 16px}
+.signin{max-width:420px;margin:48px auto;text-align:center}
+.gbtn{display:inline-flex;gap:10px;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 18px;border-radius:8px;font:inherit;font-weight:600;cursor:pointer}
+@media print{
+  header,nav,.tools,.noprint,.toast,.modal-back{display:none!important}
+  body{background:#fff;color:#000}
+  .card{border:none;padding:0}
+  main{max-width:none;padding:0}
+  .cols2>div{overflow:visible}
+}
+</style>
+</head>
+<body>
+<header>
+  <div><h1 id="orgName">Odakkuzhal (Marol Malayali Samajam)</h1><div class="sub" id="orgSub">Regst No.: F-16615 (MUMBAI) Dt.12/04/1994 (The Bombay Public Trusts Act, 1950)</div></div>
+  <div class="who" id="who"></div>
+</header>
+<nav id="nav"></nav>
+<main id="app"><div class="card empty">Loading…</div></main>
+<div id="modalRoot"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script type="module">
+/* =========================================================================
+   Odakkuzhal – Treasurer's books (Firebase edition)
+   Login: Google, via Firebase Authentication.
+   Data:  Cloud Firestore (Standard). Paths:
+     members/{email}  {role: treasurer|editor|viewer}
+     books/config     chart of accounts with opening balances
+     txns/{id}        one entry: one debit head, one credit head, amount in paise
+     log/{auto}       append-only change log (who did what, when)
+   Access is enforced by the Firestore rules in firestore.rules; the UI only
+   hides what a role cannot do.
+   ========================================================================= */
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  doc, collection, query, orderBy, limit, onSnapshot, writeBatch }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAVlLW1SxuynHr9dcKBzwrAFPzMWyBAMcs",
+  authDomain: "odakkuzhal-books.firebaseapp.com",
+  projectId: "odakkuzhal-books",
+  storageBucket: "odakkuzhal-books.firebasestorage.app",
+  messagingSenderId: "57980194605",
+  appId: "1:57980194605:web:5d9967a215d7cb45b5cda4"
+};
+
+const P = r => Math.round(Number(r) * 100);
+
+// Used only when the books are set up for the first time:
+// the audited Balance Sheet as on 31-03-2026.
+const DEFAULT_ACCOUNTS = [
+  {id:'corpus',   name:'Trust Funds or Corpus',            type:'fund',      group:'Trust Funds',               opening:P(5165)},
+  {id:'building', name:'Building Fund',                    type:'fund',      group:'Trust Funds',               opening:P(734988)},
+  {id:'ie',       name:'Income & Expenditure A/c',         type:'fund',      group:'Income & Expenditure A/c',  opening:P(426080), system:true},
+  {id:'pay_exp',  name:'Liabilities – For Expenses (outstanding)', type:'liability', group:'Liabilities',      opening:P(6490)},
+  {id:'pay_dep',  name:'Liabilities – For Deposits',       type:'liability', group:'Liabilities',               opening:P(20000)},
+  {id:'fd',       name:'FDR with NKGSB',                   type:'asset',     group:'Investments',               opening:P(803313)},
+  {id:'fd_int',   name:'Accrued Interest on FDR',          type:'asset',     group:'Investments',               opening:P(16244)},
+  {id:'fa_ac',    name:'Air Conditioner',                  type:'asset',     group:'Fixed Assets', depRate:10,  opening:P(11442)},
+  {id:'fa_furn',  name:'Furniture & Fixtures',             type:'asset',     group:'Fixed Assets', depRate:10,  opening:P(10157)},
+  {id:'fa_ht',    name:'Home Theatre',                     type:'asset',     group:'Fixed Assets', depRate:25,  opening:P(106)},
+  {id:'fa_music', name:'Music Instruments',                type:'asset',     group:'Fixed Assets', depRate:10,  opening:P(751)},
+  {id:'fa_prem',  name:'Premises of Office',               type:'asset',     group:'Fixed Assets', depRate:10,  opening:P(104122)},
+  {id:'tds',      name:'TDS Receivables',                  type:'asset',     group:'Other Current Assets',      opening:P(5820)},
+  {id:'bank',     name:'Bank Account – NKGSB',             type:'asset',     group:'Cash and Bank Balances',    opening:P(230417), system:true},
+  {id:'cash',     name:'Cash in Hand',                     type:'asset',     group:'Cash and Bank Balances',    opening:P(10351),  system:true},
+  {id:'inc_don',   name:'Donation in Bank or Kind',                  type:'income', group:'Donations', opening:0},
+  {id:'inc_fdint', name:'Interest on Fixed Deposits with NKGSB',     type:'income', group:'Interest',  opening:0},
+  {id:'inc_sbint', name:'Interest on Savings Bank Account – NKGSB',  type:'income', group:'Interest',  opening:0},
+  {id:'inc_itint', name:'Interest on Income Tax Refund',             type:'income', group:'Interest',  opening:0},
+  {id:'exp_bank',     name:'Bank Charges',                type:'expense', group:'Establishment Expenses', opening:0},
+  {id:'exp_office',   name:'Office Expenses',             type:'expense', group:'Establishment Expenses', opening:0},
+  {id:'exp_elec',     name:'Electricity Charges',         type:'expense', group:'Establishment Expenses', opening:0},
+  {id:'exp_sainagar', name:'Sai Nagar CHS Ltd',           type:'expense', group:'Establishment Expenses', opening:0},
+  {id:'exp_repairs',  name:'Repairs & Maintenance',       type:'expense', group:'Establishment Expenses', opening:0},
+  {id:'exp_agm',      name:'Misc Expenditure (AGM)',      type:'expense', group:'Establishment Expenses', opening:0},
+  {id:'exp_print',    name:'Printing & Stationery',       type:'expense', group:'Establishment Expenses', opening:0},
+  {id:'exp_sundry',   name:'Sundry Expenses',             type:'expense', group:'Establishment Expenses', opening:0},
+  {id:'exp_water',    name:'Water Charges',               type:'expense', group:'Establishment Expenses', opening:0},
+  {id:'exp_dep',      name:'Depreciation',                type:'expense', group:'Depreciation',           opening:0, system:true},
+  {id:'exp_proj',     name:'Project Operation Expenses',  type:'expense', group:'Expenditure on Object of the Trust', opening:0},
+  {id:'exp_charity',  name:'Other Charitable Objects',    type:'expense', group:'Expenditure on Object of the Trust', opening:0},
+  {id:'exp_audit',    name:'Audit Fees',                  type:'expense', group:'Audit Fees',             opening:0},
+];
+const DEFAULT_ORG = {name:'Odakkuzhal', fullName:'Odakkuzhal (Marol Malayali Samajam)',
+  regNo:'F-16615 (MUMBAI) Dt.12/04/1994 (The Bombay Public Trusts Act, 1950)', openingDate:'2026-04-01'};
+
+const GROUPS = {
+  fund:['Trust Funds'], liability:['Liabilities'],
+  asset:['Investments','Fixed Assets','Other Current Assets','Cash and Bank Balances'],
+  income:['Donations','Interest','Other Income'],
+  expense:['Establishment Expenses','Depreciation','Expenditure on Object of the Trust','Audit Fees','Other Expenses'],
+};
+const TYPE_LABEL = {fund:'Fund',liability:'Liability',asset:'Asset',income:'Income',expense:'Expenditure'};
+const ROLES = ['treasurer','editor','viewer'];
+const ROLE_HELP = {treasurer:'Everything, including deleting entries, opening balances and members',
+  editor:'Add and edit entries; cannot delete', viewer:'See the books and statements only'};
+
+// Audited I&E for year ended 31-03-2026 – previous-year column for FY 2026-27.
+const AUDITED_PY = {label:'31-03-2026', amounts:{exp_bank:531,exp_office:4540,exp_elec:2020,exp_sainagar:8200,
+  exp_repairs:3958,exp_agm:5030,exp_print:2379,exp_sundry:7970,exp_water:772,exp_dep:14088,exp_proj:0,
+  exp_charity:32250,exp_audit:6490,inc_don:180765,inc_fdint:58191,inc_sbint:4190,inc_itint:306}};
+
+/* ------------------------------ Firebase ------------------------------ */
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+let db;
+try { db = initializeFirestore(app, {localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})}); }
+catch(e){ db = initializeFirestore(app, {}); }   // private windows may refuse the local cache
+
+/* ------------------------------ state ------------------------------ */
+let user = null, role = null;        // role: treasurer | editor | viewer | null (not a member)
+let S = {org:DEFAULT_ORG, accounts:[], txns:[], lastBackup:null};
+let members = [], logRows = [];
+let phase = 'auth';                  // auth | signin | checking | denied | loading | ready | error
+let cfgLoaded = false, txLoaded = false, hasConfig = false;
+let unsubs = [];
+let pending = 0;
+const canEdit = () => role === 'treasurer' || role === 'editor';
+const isTreasurer = () => role === 'treasurer';
+const email = () => (user?.email || '').toLowerCase();
+
+function stopListeners(){ unsubs.forEach(u => { try{u();}catch(e){} }); unsubs = []; }
+
+onAuthStateChanged(auth, u => {
+  stopListeners();
+  user = u; role = null; cfgLoaded = txLoaded = hasConfig = false; S.txns = []; members = []; logRows = [];
+  if (!u){ phase = 'signin'; render(); return; }
+  phase = 'checking'; render();
+  // Our own member document says which role we have. A non-member gets permission-denied.
+  unsubs.push(onSnapshot(doc(db, 'members', email()), s => {
+    if (!s.exists() && s.metadata.fromCache) return;   // wait for the server before saying "no access"
+    const r = s.exists() ? s.data().role : null;
+    const was = role; role = ROLES.includes(r) ? r : null;
+    if (!role){ stopListeners(); phase = 'denied'; render(); return; }
+    if (!was) startData();
+    else render();
+  }, () => { stopListeners(); role = null; phase = 'denied'; render(); }));
+});
+
+function startData(){
+  phase = 'loading'; render();
+  unsubs.push(onSnapshot(doc(db, 'books', 'config'), s => {
+    if (!s.exists() && s.metadata.fromCache) return;   // never offer "Set up books" from an empty cache
+    cfgLoaded = true; hasConfig = s.exists();
+    if (s.exists()){ const d = s.data(); S.org = d.org || DEFAULT_ORG; S.accounts = d.accounts || []; S.lastBackup = d.lastBackup ?? null; }
+    if (phase === 'loading' && txLoaded) phase = 'ready';
+    refresh();
+  }, onDbError));
+  unsubs.push(onSnapshot(collection(db, 'txns'), s => {
+    txLoaded = true;
+    S.txns = s.docs.map(d => ({...d.data(), id:d.id}));
+    if (phase === 'loading' && cfgLoaded) phase = 'ready';
+    refresh();
+  }, onDbError));
+  unsubs.push(onSnapshot(collection(db, 'members'), s => {
+    members = s.docs.map(d => ({email:d.id, ...d.data()})).sort((a,b) => a.email.localeCompare(b.email));
+    if (view === 'members') refresh();
+  }, () => {}));
+  unsubs.push(onSnapshot(query(collection(db, 'log'), orderBy('at','desc'), limit(300)), s => {
+    logRows = s.docs.map(d => d.data());
+    if (view === 'log') refresh();
+  }, () => {}));
+}
+function onDbError(e){
+  console.error(e);
+  phase = 'error'; render();
+}
+async function signIn(){
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch(e){
+    const c = e?.code || '';
+    if (c.includes('popup-closed') || c.includes('cancelled-popup')) return;
+    if (c.includes('popup-blocked')) toast('Your browser blocked the sign-in window. Allow pop-ups for this site and try again.');
+    else if (c.includes('unauthorized-domain')) toast('This web address is not yet allowed in Firebase (Authentication → Settings → Authorized domains).');
+    else toast('Sign-in failed: ' + (e?.message || c));
+  }
+}
+
+/* Writes: every change goes in one batch with its change-log line, so the log can't miss anything.
+   The promise is not awaited for the UI: Firestore shows the change at once and syncs in the background. */
+function commit(build, okMsg){
+  const b = writeBatch(db);
+  build(b);
+  pending++; setSync();
+  return b.commit().then(() => { if (okMsg) toast(okMsg); return true; })
+    .catch(e => {
+      console.error(e);
+      toast(e?.code === 'permission-denied' ? 'Not saved: your role does not allow this.' : 'Not saved. Check your internet connection and try again.');
+      return false;
+    })
+    .finally(() => { pending--; setSync(); });
+}
+function logEntry(b, action, detail){
+  b.set(doc(collection(db, 'log')), {at:Date.now(), by:email(), action, ...detail});
+}
+const txnSummary = t => `${t.vno} · ${dmy(t.date)} · ₹${fmt(t.amount)} · Dr ${accName(t.dr)} / Cr ${accName(t.cr)}${t.party?` · ${t.party}`:''}`;
+function saveTxn(t, old){
+  const rec = {...t, lastEditedBy:email(), updated:Date.now()};
+  if (!old) rec.createdBy = email();
+  delete rec.id;
+  return commit(b => {
+    b.set(doc(db, 'txns', t.id), rec);
+    logEntry(b, old ? 'edit' : 'add', {txnId:t.id, vno:t.vno, summary:txnSummary(t), before: old ? txnSummary(old) : null});
+  });
+}
+function removeTxn(t){
+  return commit(b => { b.delete(doc(db, 'txns', t.id)); logEntry(b, 'delete', {txnId:t.id, vno:t.vno, summary:txnSummary(t)}); }, `Deleted ${t.vno}.`);
+}
+function saveConfig(what){
+  const body = {org:S.org, accounts:S.accounts, lastBackup:S.lastBackup ?? null, updatedAt:Date.now(), updatedBy:email()};
+  return commit(b => { b.set(doc(db, 'books', 'config'), body); if (what) logEntry(b, 'settings', {summary:what}); });
+}
+
+/* ------------------------------ UI helpers ------------------------------ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let toastTimer;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 4000);
+}
+function ask(message, {ok='OK', danger=false, typeWord=null} = {}){
+  return new Promise(resolve => {
+    const root = $('#modalRoot');
+    root.innerHTML = `<div class="modal-back"><div class="modal" role="dialog" aria-modal="true">
+      <div>${message}</div>
+      ${typeWord ? `<label>Type ${typeWord} to confirm<input id="m_word" autocomplete="off"></label>` : ''}
+      <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="m_no">Cancel</button>
+      <button class="btn ${danger?'danger':''}" id="m_ok">${esc(ok)}</button></div></div></div>`;
+    const done = v => { root.innerHTML = ''; resolve(v); };
+    $('#m_no').onclick = () => done(false);
+    $('#m_ok').onclick = () => { if (typeWord && $('#m_word').value.trim() !== typeWord) { $('#m_word').focus(); return; } done(true); };
+    ($('#m_word') || $('#m_ok')).focus();
+  });
+}
+function setSync(){
+  const el = $('#syncChip'); if (!el) return;
+  if (!navigator.onLine){ el.className = 'chip busy'; el.textContent = 'Offline – will sync'; return; }
+  if (pending > 0){ el.className = 'chip busy'; el.textContent = 'Saving…'; return; }
+  el.className = 'chip ok'; el.textContent = '✓ Synced';
+}
+window.addEventListener('online', setSync); window.addEventListener('offline', setSync);
+function renderWho(){
+  $('#who').innerHTML = user ? `<span>${esc(user.email)}</span>${role?`<span class="chip role">${role}</span>`:''}
+    ${phase==='ready'?'<span id="syncChip" class="chip"></span>':''}<button class="btn ghost sm" data-act="signOut">Sign out</button>` : '';
+  setSync();
+}
+
+/* ------------------------------ accounting helpers ------------------------------ */
+const acc = id => S.accounts.find(a => a.id === id);
+const accName = id => acc(id)?.name ?? id;
+function fmt(p, blankZero){
+  if (blankZero && !p) return '';
+  return (p/100).toLocaleString('en-IN',{minimumFractionDigits: p%100 ? 2 : 0, maximumFractionDigits:2});
+}
+function dmy(iso){ if(!iso) return ''; const [y,m,d] = iso.split('-'); return `${d}-${m}-${y}`; }
+function today(){ const d = new Date(); return new Date(d - d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
+function fyStartYear(iso){ const [y,m] = iso.split('-').map(Number); return m >= 4 ? y : y-1; }
+function fyRange(y){ return {from:`${y}-04-01`, to:`${y+1}-03-31`, label:`${y}-${String(y+1).slice(2)}`, endLabel:`31-03-${y+1}`}; }
+function prevDay(iso){ const d = new Date(iso+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()-1); return d.toISOString().slice(0,10); }
+const baseFY = () => fyStartYear(S.org.openingDate);
+function fyList(){
+  const ys = new Set([baseFY(), fyStartYear(today())]);
+  S.txns.forEach(t => ys.add(fyStartYear(t.date)));
+  return [...ys].filter(y => y >= baseFY()).sort();
+}
+const debitNature = a => a && (a.type === 'asset' || a.type === 'expense');
+const isMoney = id => id === 'cash' || id === 'bank';
+const sortedTxns = () => [...S.txns].sort((a,b) => a.date.localeCompare(b.date) || (a.created||0) - (b.created||0));
+const newId = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+
+function movement(id, from, to){
+  const a = acc(id); let dr = 0, cr = 0;
+  for (const t of S.txns){
+    if (from && t.date < from) continue;
+    if (to && t.date > to) continue;
+    if (t.dr === id) dr += t.amount;
+    if (t.cr === id) cr += t.amount;
+  }
+  return {dr, cr, net: debitNature(a) ? dr - cr : cr - dr};
+}
+function surplus(from, to){
+  let s = 0;
+  for (const a of S.accounts){
+    if (a.type === 'income')  s += movement(a.id, from, to).net;
+    if (a.type === 'expense') s -= movement(a.id, from, to).net;
+  }
+  return s;
+}
+function balanceAt(id, to){
+  const a = acc(id); if (!a) return 0;
+  if (a.type === 'income' || a.type === 'expense') return movement(id, null, to).net;
+  let b = a.opening + movement(id, null, to).net;
+  if (id === 'ie') b += surplus(null, to);
+  return b;
+}
+function nextVoucher(kind, date, extra = []){
+  const prefix = {receipt:'R',payment:'P',contra:'C',journal:'J'}[kind];
+  const y = fyStartYear(date);
+  const n = 1 + S.txns.concat(extra).filter(t => t.kind === kind && fyStartYear(t.date) === y)
+    .reduce((m,t) => Math.max(m, parseInt(String(t.vno).split('/').pop(), 10) || 0), 0);
+  return `${prefix}/${fyRange(y).label}/${String(n).padStart(3,'0')}`;
+}
+function periodFor(y){ const fy = fyRange(y); return {...fy, from: fy.from < S.org.openingDate ? S.org.openingDate : fy.from}; }
+
+/* ------------------------------ navigation & events ------------------------------ */
+const VIEWS = [
+  ['dash','Dashboard'],['entry','New Entry',canEdit],['txns','Transactions'],['cashbook','Cash / Bank Book'],
+  ['ledger','Ledger'],['rp','Receipts & Payments'],['ie','Income & Expenditure'],['bs','Balance Sheet'],
+  ['yearend','Year-end',isTreasurer],['log','Change log'],['settings','Heads & Backup'],['members','Members',isTreasurer],['help','How to record'],
+];
+let view = 'dash', editingId = null, entryKind = 'receipt', selFY = null;
+let bookAcc = 'cash', ledgerAcc = 'inc_don', txFilter = {q:'', head:''};
+let deferred = false, formDirty = false;
+
+function go(v){ view = v; if (v !== 'entry') editingId = null; render(); window.scrollTo(0,0); }
+
+const ACTIONS = {
+  go: a => go(a),
+  signIn: () => signIn(),
+  signOut: () => signOut(auth),
+  recheck: () => location.reload(),
+  newReceipt: () => { entryKind='receipt'; editingId=null; go('entry'); },
+  newPayment: () => { entryKind='payment'; editingId=null; go('entry'); },
+  kind: a => { entryKind = a; render(); },
+  cancelEdit: () => { editingId = null; go('txns'); },
+  edit: a => { editingId = a; go('entry'); },
+  del: a => delTxn(a),
+  book: a => { bookAcc = a; render(); },
+  postDep: () => postDep(),
+  exportJSON: () => exportJSON(),
+  exportCSV: () => exportCSV(),
+  print: () => window.print(),
+  delHead: a => delHead(a),
+  setup: () => setupBooks(),
+  removeMember: a => removeMember(a),
+};
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  e.preventDefault(); ACTIONS[b.dataset.act]?.(b.dataset.arg);
+});
+document.addEventListener('change', e => {
+  const t = e.target, k = t.dataset.change; if (!k) return;
+  if (k === 'fy'){ selFY = +t.value; render(); }
+  else if (k === 'txHead'){ txFilter.head = t.value; render(); }
+  else if (k === 'txQ'){ txFilter.q = t.value; render(); }
+  else if (k === 'ledger'){ ledgerAcc = t.value; render(); }
+  else if (k === 'rename'){ renameHead(t.dataset.id, t.value); }
+  else if (k === 'opening'){ setOpening(t.dataset.id, t.value); }
+  else if (k === 'hType'){ $('#h_group').innerHTML = GROUPS[t.value].map(g => `<option>${esc(g)}</option>`).join(''); }
+  else if (k === 'restore'){ importJSON(t.files[0]); t.value = ''; }
+  else if (k === 'memberRole'){ setMemberRole(t.dataset.email, t.value); }
+});
+document.addEventListener('submit', e => {
+  e.preventDefault();
+  if (e.target.id === 'entryForm') submitEntry();
+  if (e.target.id === 'headForm') addHead();
+  if (e.target.id === 'memberForm') addMember();
+});
+document.addEventListener('input', e => { if (e.target.closest('form')) formDirty = true; });
+
+function renderNav(){
+  $('#nav').innerHTML = VIEWS.filter(v => !v[2] || v[2]()).map(([k,l]) => `<button data-act="go" data-arg="${k}" class="${k===view?'on':''}">${l}</button>`).join('');
+}
+function fySelect(){
+  return `<label style="max-width:160px">Financial year<select data-change="fy">${
+    fyList().map(y => `<option value="${y}" ${y===selFY?'selected':''}>FY ${fyRange(y).label}</option>`).join('')}</select></label>`;
+}
+const printBtn = () => `<button class="btn ghost" data-act="print">Print / Save as PDF</button>`;
+function stmtHead(title, sched){
+  return `<div class="stmt-head"><b>${esc(S.org.name.toUpperCase())}</b><br>
+    <span class="muted">Regst No.: ${esc(S.org.regNo)}</span><br>
+    ${sched ? `<span class="muted">${sched}</span><br>` : ''}<b>${title}</b></div>`;
+}
+// Live updates call this. Don't wipe a form someone is typing into.
+function refresh(){
+  if (formDirty && (view === 'entry' || view === 'settings' || view === 'members' || view === 'yearend')) { deferred = true; return; }
+  render();
+}
+function render(){
+  deferred = false; formDirty = false;
+  $('#orgName').textContent = S.org.fullName;
+  $('#orgSub').textContent = 'Regst No.: ' + S.org.regNo;
+  renderWho();
+  const bare = html => { $('#nav').innerHTML = ''; $('#app').innerHTML = html; };
+  if (phase === 'auth' || phase === 'checking') return bare('<div class="card empty">Loading…</div>');
+  if (phase === 'signin') return bare(`<div class="card signin"><h2>Odakkuzhal Accounts</h2>
+      <p class="muted">Sign in with the Google account the treasurer has added as a member.</p>
+      <button class="gbtn" data-act="signIn"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Sign in with Google</button></div>`);
+  if (phase === 'denied') return bare(`<div class="card signin"><h2>No access yet</h2>
+      <p>You are signed in as <b>${esc(user?.email)}</b>, but this email is not on the members list.</p>
+      <p class="muted">Ask the treasurer to add exactly this email under <b>Members</b>, then tap Check again.</p>
+      <div class="row" style="justify-content:center"><button class="btn" data-act="recheck">Check again</button><button class="btn ghost" data-act="signOut">Use a different account</button></div></div>`);
+  if (phase === 'error') return bare(`<div class="card empty"><h2>Could not load the books</h2><p class="muted">Check your internet connection. If this keeps happening, the database rules may not be published yet.</p><button class="btn" data-act="recheck">Reload</button></div>`);
+  if (phase === 'loading') return bare('<div class="card empty">Loading your books…</div>');
+  if (!hasConfig){
+    return bare(`<div class="card empty"><h2>Set up the books</h2>
+      <p class="muted">Start from the audited Balance Sheet as on 31-03-2026 (Cash ₹10,351, NKGSB ₹2,30,417, FDR ₹8,03,313 and the rest). Opening balances can be adjusted afterwards under Heads & Backup.</p>
+      ${isTreasurer() ? '<button class="btn" data-act="setup">Load audited opening balances</button>' : '<p>The treasurer has not set up the books yet.</p>'}</div>`);
+  }
+  if (selFY === null || !fyList().includes(selFY)) selFY = Math.max(...fyList().filter(y => y <= fyStartYear(today())), baseFY());
+  const allowed = VIEWS.find(v => v[0] === view);
+  if (!allowed || (allowed[2] && !allowed[2]())) view = 'dash';
+  renderNav();
+  $('#app').innerHTML = ({dash, entry, txns, cashbook, ledger, rp, ie:ieView, bs, yearend, log:logView, settings, members:membersView, help})[view]();
+  if (view === 'entry') wireEntry();
+}
+
+/* ------------------------------ dashboard ------------------------------ */
+function dash(){
+  const t = today(), fy = periodFor(Math.max(fyStartYear(t), baseFY()));
+  let rec = 0, pay = 0;
+  for (const x of S.txns){
+    if (x.date < fy.from || x.date > fy.to) continue;
+    if (isMoney(x.dr) && !isMoney(x.cr)) rec += x.amount;
+    if (isMoney(x.cr) && !isMoney(x.dr)) pay += x.amount;
+  }
+  const backupDays = S.lastBackup ? Math.floor((Date.now() - S.lastBackup)/86400000) : null;
+  const recent = sortedTxns().reverse().slice(0,8);
+  const cash = balanceAt('cash', '9999-12-31');
+  return `
+  ${isTreasurer() && (backupDays === null || backupDays > 30) ? `<div class="note">Keep your own copy of the books once a month: <a href="#" data-act="exportJSON">download a backup</a>${backupDays===null?'':` (last one ${backupDays} days ago)`}.</div>` : ''}
+  ${cash < 0 ? `<div class="note">Cash in hand is negative. A cash payment was recorded that was never received in cash. Check the Cash Book.</div>` : ''}
+  <div class="grid">
+    <div class="tile"><div class="k">Cash in hand</div><div class="v">₹ ${fmt(cash)}</div></div>
+    <div class="tile"><div class="k">Bank – NKGSB</div><div class="v">₹ ${fmt(balanceAt('bank','9999-12-31'))}</div></div>
+    <div class="tile"><div class="k">FD + accrued interest</div><div class="v">₹ ${fmt(balanceAt('fd','9999-12-31')+balanceAt('fd_int','9999-12-31'))}</div></div>
+    <div class="tile"><div class="k">Received (FY ${fy.label})</div><div class="v in">₹ ${fmt(rec)}</div></div>
+    <div class="tile"><div class="k">Paid out (FY ${fy.label})</div><div class="v out">₹ ${fmt(pay)}</div></div>
+    <div class="tile"><div class="k">Surplus so far (FY ${fy.label})</div><div class="v">₹ ${fmt(surplus(fy.from, fy.to))}</div></div>
+  </div>
+  <div class="card">
+    <div class="row" style="justify-content:space-between"><h2>Recent entries</h2>
+      ${canEdit() ? `<div class="row"><button class="btn" data-act="newReceipt">+ Receipt</button><button class="btn" data-act="newPayment">+ Payment</button></div>` : ''}</div>
+    ${recent.length ? txnTable(recent, false) : `<p class="muted">No entries yet.${canEdit()?' Tap <b>+ Receipt</b> or <b>+ Payment</b> to record the first one.':''}</p>`}
+  </div>`;
+}
+
+/* ------------------------------ entry form ------------------------------ */
+const KINDS = [['receipt','Receipt (money in)'],['payment','Payment (money out)'],['contra','Cash ⇄ Bank'],['journal','Journal (non-cash)']];
+function headOptions(types, selected, exclude=[]){
+  return ['income','expense','fund','liability','asset'].filter(t => types.includes(t)).map(t => {
+    const list = S.accounts.filter(a => a.type === t && !exclude.includes(a.id) && a.id !== 'ie');
+    if (!list.length) return '';
+    return `<optgroup label="${TYPE_LABEL[t]}">${list.map(a => `<option value="${a.id}" ${a.id===selected?'selected':''}>${esc(a.name)}${a.type==='income'||a.type==='expense'?' · '+esc(a.group):''}</option>`).join('')}</optgroup>`;
+  }).join('');
+}
+function entry(){
+  const t = editingId ? S.txns.find(x => x.id === editingId) : null;
+  if (editingId && !t){ editingId = null; }
+  if (t) entryKind = t.kind;
+  const k = entryKind, d = t ? t.date : today();
+  let fields = '';
+  if (k === 'receipt'){
+    fields = `
+      <label>Received into<select id="f_mode"><option value="cash" ${t?.dr==='cash'?'selected':''}>Cash</option><option value="bank" ${t?.dr==='bank'?'selected':''}>Bank – NKGSB</option></select></label>
+      <label>Head (what is it for)<select id="f_head">${headOptions(['income','fund','liability','asset'], t?.cr ?? 'inc_don', ['cash','bank'])}</select></label>
+      <label>Received from<input id="f_party" value="${esc(t?.party)}" placeholder="Name of member / donor"></label>`;
+  } else if (k === 'payment'){
+    fields = `
+      <label>Paid from<select id="f_mode"><option value="cash" ${t?.cr==='cash'?'selected':''}>Cash</option><option value="bank" ${t?.cr==='bank'?'selected':''}>Bank – NKGSB</option></select></label>
+      <label>Head (what is it for)<select id="f_head">${headOptions(['expense','asset','liability','fund'], t?.dr ?? 'exp_office', ['cash','bank'])}</select></label>
+      <label>Paid to<input id="f_party" value="${esc(t?.party)}" placeholder="Vendor / person"></label>`;
+  } else if (k === 'contra'){
+    fields = `
+      <label>Direction<select id="f_dir">
+        <option value="c2b" ${t?.dr==='bank'?'selected':''}>Deposit cash into bank</option>
+        <option value="b2c" ${t?.dr==='cash'?'selected':''}>Withdraw cash from bank</option></select></label>`;
+  } else {
+    fields = `
+      <label>Debit (Dr)<select id="f_dr">${headOptions(['asset','expense','liability','fund','income'], t?.dr ?? 'fd', ['cash','bank'])}</select></label>
+      <label>Credit (Cr)<select id="f_cr">${headOptions(['income','asset','liability','fund','expense'], t?.cr ?? 'inc_fdint', ['cash','bank'])}</select></label>`;
+  }
+  return `<div class="card">
+    <h2>${t ? 'Edit entry '+esc(t.vno) : 'New entry'}</h2>
+    ${t ? `<p class="muted small" style="margin-top:0">Entered by ${esc(t.createdBy||'–')}${t.lastEditedBy && t.lastEditedBy!==t.createdBy?`, last edited by ${esc(t.lastEditedBy)}`:''}</p>` : `<div class="seg">${KINDS.map(([v,l]) => `<button class="${v===k?'on':''}" data-act="kind" data-arg="${v}">${l}</button>`).join('')}</div>`}
+    ${k === 'journal' ? '<p class="muted" style="margin-top:0">Use for entries where no cash or bank money moves: FD interest credited to the FD, TDS deducted, depreciation, provisions for expenses, transfer between funds.</p>' : ''}
+    <form id="entryForm" class="form" novalidate>
+      <label>Date<input type="date" id="f_date" value="${d}" min="${S.org.openingDate}" required></label>
+      ${fields}
+      <label>Amount (₹)<input id="f_amt" type="number" step="0.01" min="0.01" inputmode="decimal" value="${t ? t.amount/100 : ''}" required></label>
+      <label>Cheque / UPI / receipt ref<input id="f_ref" value="${esc(t?.ref)}"></label>
+      <label style="grid-column:1/-1">Narration<input id="f_narr" value="${esc(t?.narration)}" placeholder="e.g. Onam celebration – donation"></label>
+      <div class="row" style="grid-column:1/-1">
+        <button class="btn" type="submit" id="f_save">${t ? 'Save changes' : 'Save entry'}</button>
+        ${t ? `<button class="btn ghost" type="button" data-act="cancelEdit">Cancel</button>` : ''}
+        <span id="f_hint" class="muted"></span>
+      </div>
+    </form></div>`;
+}
+function wireEntry(){
+  const h = $('#f_hint'), mode = $('#f_mode');
+  const upd = () => { if (mode && h) h.textContent = `${mode.value === 'cash' ? 'Cash in hand' : 'Bank balance'} now: ₹ ${fmt(balanceAt(mode.value,'9999-12-31'))}`; };
+  if (mode){ mode.addEventListener('change', upd); upd(); }
+}
+async function submitEntry(){
+  const date = $('#f_date').value, amount = P($('#f_amt').value);
+  if (!date || !(amount > 0)) return toast('Enter a date and an amount greater than zero.');
+  if (date < S.org.openingDate) return toast(`Date must be on or after ${dmy(S.org.openingDate)}, the opening balance date.`);
+  let dr, cr; const k = entryKind;
+  if (k === 'receipt'){ dr = $('#f_mode').value; cr = $('#f_head').value; }
+  else if (k === 'payment'){ cr = $('#f_mode').value; dr = $('#f_head').value; }
+  else if (k === 'contra'){ const c2b = $('#f_dir').value === 'c2b'; dr = c2b ? 'bank' : 'cash'; cr = c2b ? 'cash' : 'bank'; }
+  else { dr = $('#f_dr').value; cr = $('#f_cr').value; }
+  if (dr === cr) return toast('Debit and credit heads cannot be the same.');
+  const old = editingId ? S.txns.find(x => x.id === editingId) : null;
+
+  // Would this push cash or bank negative on any later date?
+  const draft = {id: old?.id ?? 'tmp', date, dr, cr, amount};
+  const all = S.txns.filter(x => x.id !== draft.id).concat([draft]).sort((a,b) => a.date.localeCompare(b.date));
+  for (const m of ['cash','bank']){
+    if (cr !== m) continue;
+    let bal = acc(m).opening, low = Infinity, lowDate = '';
+    for (const x of all){
+      if (x.dr === m) bal += x.amount;
+      if (x.cr === m) bal -= x.amount;
+      if (x.date >= date && bal < low){ low = bal; lowDate = x.date; }
+    }
+    if (low < 0 && !(await ask(`${esc(accName(m))} would go negative (₹ ${fmt(low)} on ${dmy(lowDate)}). Save anyway?`, {ok:'Save anyway'}))) return;
+  }
+  const rec = {date, dr, cr, amount, kind:k,
+    party: $('#f_party')?.value.trim() || '', ref: $('#f_ref').value.trim(), narration: $('#f_narr').value.trim()};
+  let t;
+  if (old){
+    t = {...old, ...rec};
+    if (fyStartYear(old.date) !== fyStartYear(date)) t.vno = nextVoucher(k, date);
+  } else {
+    t = {id:newId(), created:Date.now(), vno:nextVoucher(k, date), ...rec};
+  }
+  saveTxn(t, old);
+  toast(`Saved ${t.vno}.`);
+  editingId = null; formDirty = false;
+  if (old) go('txns'); else render();
+}
+
+/* ------------------------------ transactions ------------------------------ */
+function txnTable(list, actions){
+  const showAct = actions && canEdit();
+  return `<div class="tablewrap"><table><thead><tr><th>Date</th><th class="vno">Voucher</th><th>Particulars</th><th>Mode</th><th class="n">In</th><th class="n">Out</th>${showAct?'<th class="noprint"></th>':''}</tr></thead><tbody>
+  ${list.map(t => {
+    const inn = isMoney(t.dr) && !isMoney(t.cr), out = isMoney(t.cr) && !isMoney(t.dr);
+    const head = t.kind === 'receipt' ? t.cr : t.kind === 'payment' ? t.dr : null;
+    const part = t.kind === 'contra' ? (t.dr === 'bank' ? 'Cash deposited into bank' : 'Cash withdrawn from bank')
+               : t.kind === 'journal' ? `Dr ${esc(accName(t.dr))} / Cr ${esc(accName(t.cr))}` : esc(accName(head));
+    const mode = t.kind === 'journal' ? 'Journal' : t.kind === 'contra' ? 'Contra' : ((inn ? t.dr : t.cr) === 'cash' ? 'Cash' : 'Bank');
+    return `<tr><td class="d">${dmy(t.date)}</td><td class="muted vno">${esc(t.vno)}</td>
+      <td>${part}${t.party?` – <span class="muted">${esc(t.party)}</span>`:''}${t.narration?`<br><span class="muted">${esc(t.narration)}</span>`:''}${t.ref?` <span class="muted">[${esc(t.ref)}]</span>`:''}</td>
+      <td>${mode}</td><td class="n in">${inn?fmt(t.amount):''}</td><td class="n out">${out?fmt(t.amount):''}</td>
+      ${showAct?`<td class="noprint" style="white-space:nowrap"><button class="btn ghost sm" data-act="edit" data-arg="${esc(t.id)}">Edit</button>${isTreasurer()?` <button class="btn danger sm" data-act="del" data-arg="${esc(t.id)}">Delete</button>`:''}</td>`:''}</tr>`;
+  }).join('')}</tbody></table></div>`;
+}
+function txns(){
+  const fy = fyRange(selFY);
+  let list = sortedTxns().filter(t => t.date >= fy.from && t.date <= fy.to);
+  if (txFilter.head) list = list.filter(t => t.dr === txFilter.head || t.cr === txFilter.head);
+  if (txFilter.q){ const q = txFilter.q.toLowerCase(); list = list.filter(t => [t.party,t.narration,t.ref,t.vno,accName(t.dr),accName(t.cr)].join(' ').toLowerCase().includes(q)); }
+  return `<div class="card"><div class="tools">${fySelect()}
+    <label style="max-width:260px">Head<select data-change="txHead"><option value="">All heads</option>${headOptions(['income','expense','fund','liability','asset'], txFilter.head)}</select></label>
+    <label style="max-width:220px">Search<input data-change="txQ" value="${esc(txFilter.q)}" placeholder="name, narration, ref"></label>
+    <button class="btn ghost" data-act="exportCSV">Export CSV</button>${printBtn()}</div>
+    <h2>Transactions – FY ${fy.label} <span class="muted">(${list.length})</span></h2>
+    ${list.length ? txnTable(list, true) : '<p class="muted">No entries in this year.</p>'}</div>`;
+}
+async function delTxn(id){
+  const t = S.txns.find(x => x.id === id); if (!t) return;
+  if (!(await ask(`Delete <b>${esc(t.vno)}</b> dated ${dmy(t.date)} for ₹ ${fmt(t.amount)}? It disappears for everyone; the change log keeps a record.`, {ok:'Delete', danger:true}))) return;
+  removeTxn(t);
+}
+
+/* ------------------------------ books & ledger ------------------------------ */
+function ledgerTable(id, from, to){
+  const a = acc(id), nat = debitNature(a), pl = a.type === 'income' || a.type === 'expense';
+  const opening = pl ? 0 : balanceAt(id, prevDay(from));
+  let bal = opening, tdr = 0, tcr = 0;
+  const rows = sortedTxns().filter(t => t.date >= from && t.date <= to && (t.dr === id || t.cr === id)).map(t => {
+    const isDr = t.dr === id, other = isDr ? t.cr : t.dr;
+    if (isDr){ tdr += t.amount; bal += nat ? t.amount : -t.amount; } else { tcr += t.amount; bal += nat ? -t.amount : t.amount; }
+    return `<tr><td class="d">${dmy(t.date)}</td><td class="muted vno">${esc(t.vno)}</td><td>${isDr?'To':'By'} ${esc(accName(other))}${t.party?` – ${esc(t.party)}`:''}${t.narration?`<br><span class="muted">${esc(t.narration)}</span>`:''}</td>
+      <td class="n">${isDr?fmt(t.amount):''}</td><td class="n">${isDr?'':fmt(t.amount)}</td><td class="n">${fmt(bal)}</td></tr>`;
+  }).join('');
+  const [dl, cl] = isMoney(id) ? ['Receipts','Payments'] : ['Debit','Credit'];
+  return `<div class="tablewrap"><table><thead><tr><th>Date</th><th class="vno">Voucher</th><th>Particulars</th><th class="n">${dl}</th><th class="n">${cl}</th><th class="n">Balance</th></tr></thead><tbody>
+    ${pl ? '' : `<tr class="grp"><td class="d">${dmy(from)}</td><td class="vno"></td><td>Opening balance</td><td></td><td></td><td class="n">${fmt(opening)}</td></tr>`}
+    ${rows || '<tr><td colspan="6" class="muted">No entries in this period.</td></tr>'}
+    <tr class="tot"><td></td><td class="vno"></td><td>Totals / Closing balance</td><td class="n">${fmt(tdr)}</td><td class="n">${fmt(tcr)}</td><td class="n">${fmt(bal)}</td></tr>
+  </tbody></table></div>`;
+}
+function cashbook(){
+  const fy = periodFor(selFY);
+  return `<div class="card"><div class="tools">${fySelect()}
+    <div class="seg" style="margin:0"><button class="${bookAcc==='cash'?'on':''}" data-act="book" data-arg="cash">Cash Book</button><button class="${bookAcc==='bank'?'on':''}" data-act="book" data-arg="bank">Bank Book – NKGSB</button></div>
+    ${printBtn()}</div>
+    ${stmtHead(`${bookAcc==='cash'?'Cash Book':'Bank Book – NKGSB'} for FY ${fy.label}`)}
+    ${ledgerTable(bookAcc, fy.from, fy.to)}
+    <p class="muted noprint">${bookAcc==='bank' ? 'Tick this off against the NKGSB passbook every month. Enter bank charges and SB interest credited by the bank here too.' : 'Count the physical cash regularly and compare it with the closing balance above.'}</p></div>`;
+}
+function ledger(){
+  const fy = periodFor(selFY);
+  return `<div class="card"><div class="tools">${fySelect()}
+    <label style="max-width:320px">Head<select data-change="ledger">${headOptions(['income','expense','fund','liability','asset'], ledgerAcc)}<optgroup label="System"><option value="ie" ${ledgerAcc==='ie'?'selected':''}>Income & Expenditure A/c</option></optgroup></select></label>
+    ${printBtn()}</div>
+    ${stmtHead(`Ledger: ${esc(accName(ledgerAcc))} – FY ${fy.label}`)}
+    ${ledgerTable(ledgerAcc, fy.from, fy.to)}
+    ${ledgerAcc==='ie' ? '<p class="muted noprint">The yearly surplus is added to this account in the Balance Sheet; it does not appear as ledger lines.</p>' : ''}</div>`;
+}
+
+/* ------------------------------ Receipts & Payments ------------------------------ */
+function rp(){
+  const fy = periodFor(selFY), rec = {}, pay = {};
+  for (const t of S.txns){
+    if (t.date < fy.from || t.date > fy.to) continue;
+    if (isMoney(t.dr) && !isMoney(t.cr)) rec[t.cr] = (rec[t.cr]||0) + t.amount;
+    if (isMoney(t.cr) && !isMoney(t.dr)) pay[t.dr] = (pay[t.dr]||0) + t.amount;
+  }
+  const oc = balanceAt('cash', prevDay(fy.from)), ob = balanceAt('bank', prevDay(fy.from));
+  const cc = balanceAt('cash', fy.to), cb = balanceAt('bank', fy.to);
+  const sum = o => Object.values(o).reduce((a,b)=>a+b,0);
+  const lines = o => Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `<tr><td class="ind">${esc(accName(k))}</td><td class="n">${fmt(v)}</td></tr>`).join('') || '<tr><td class="ind muted">–</td><td></td></tr>';
+  return `<div class="card"><div class="tools">${fySelect()}${printBtn()}</div>
+    ${stmtHead(`Receipts & Payments Account for FY ${fy.label}`)}
+    <div class="cols2">
+      <div><table><thead><tr><th>Receipts</th><th class="n">₹</th></tr></thead><tbody>
+        <tr class="grp"><td>To Opening Balance</td><td></td></tr>
+        <tr><td class="ind">Cash in Hand</td><td class="n">${fmt(oc)}</td></tr>
+        <tr><td class="ind">Bank – NKGSB</td><td class="n">${fmt(ob)}</td></tr>
+        <tr class="grp"><td>To Receipts</td><td></td></tr>${lines(rec)}
+        <tr class="tot"><td>Total</td><td class="n">${fmt(oc+ob+sum(rec))}</td></tr></tbody></table></div>
+      <div><table><thead><tr><th>Payments</th><th class="n">₹</th></tr></thead><tbody>
+        <tr class="grp"><td>By Payments</td><td></td></tr>${lines(pay)}
+        <tr class="grp"><td>By Closing Balance</td><td></td></tr>
+        <tr><td class="ind">Cash in Hand</td><td class="n">${fmt(cc)}</td></tr>
+        <tr><td class="ind">Bank – NKGSB</td><td class="n">${fmt(cb)}</td></tr>
+        <tr class="tot"><td>Total</td><td class="n">${fmt(sum(pay)+cc+cb)}</td></tr></tbody></table></div>
+    </div>
+    <p class="muted noprint">Cash ⇄ Bank transfers are left out on both sides because they move money between your own two accounts.</p></div>`;
+}
+
+/* ------------------------------ Income & Expenditure (Schedule IX) ------------------------------ */
+function ieFigures(y){
+  if (y < baseFY()){
+    if (y === baseFY()-1){ const o = {}; for (const [k,v] of Object.entries(AUDITED_PY.amounts)) o[k] = P(v); return o; }
+    return null;
+  }
+  const fy = periodFor(y), o = {};
+  for (const a of S.accounts) if (a.type === 'income' || a.type === 'expense') o[a.id] = movement(a.id, fy.from, fy.to).net;
+  return o;
+}
+function ieView(){
+  const fy = periodFor(selFY), cur = ieFigures(selFY), prev = ieFigures(selFY-1);
+  const side = type => {
+    const groups = [...new Set(S.accounts.filter(a => a.type === type).map(a => a.group))];
+    let rows = '', tc = 0, tp = 0;
+    const pre = type === 'expense' ? 'To' : 'By';
+    for (const g of groups){
+      const list = S.accounts.filter(a => a.type === type && a.group === g);
+      const gc = list.reduce((s,a) => s + (cur[a.id]||0), 0), gp = prev ? list.reduce((s,a) => s + (prev[a.id]||0), 0) : 0;
+      tc += gc; tp += gp;
+      if (list.length === 1 && list[0].name === g){
+        rows += `<tr class="grp"><td class="n muted">${prev?fmt(gp,true):''}</td><td>${pre} ${esc(g)}</td><td></td><td class="n">${fmt(gc,true)}</td></tr>`;
+      } else {
+        rows += `<tr class="grp"><td></td><td>${pre} ${esc(g)}</td><td></td><td></td></tr>`;
+        list.forEach((a,i) => {
+          rows += `<tr><td class="n muted">${prev?fmt(prev[a.id]||0,true):''}</td><td class="ind">${esc(a.name)}</td><td class="n">${fmt(cur[a.id]||0,true)}</td><td class="n">${i===list.length-1?fmt(gc,true):''}</td></tr>`;
+        });
+      }
+    }
+    return {rows, tc, tp};
+  };
+  const E = side('expense'), I = side('income');
+  const sc = I.tc - E.tc, sp = I.tp - E.tp;
+  const prevLabel = selFY === baseFY() ? AUDITED_PY.label : fyRange(selFY-1).endLabel;
+  const balRow = isExp => {
+    const c = isExp ? Math.max(sc,0) : Math.max(-sc,0), p = isExp ? Math.max(sp,0) : Math.max(-sp,0);
+    if (!c && !p) return '';
+    return `<tr class="grp"><td class="n muted">${prev?fmt(p,true):''}</td><td>${isExp?'To Surplus carried over to Balance Sheet':'By Deficit carried over to Balance Sheet'}</td><td></td><td class="n">${fmt(c,true)}</td></tr>`;
+  };
+  const big = Math.max(E.tc + Math.max(sc,0), I.tc + Math.max(-sc,0)), bigP = Math.max(E.tp + Math.max(sp,0), I.tp + Math.max(-sp,0));
+  const head = t => `<thead><tr><th class="n">${prevLabel}</th><th>${t}</th><th class="n">Amt</th><th class="n">${fy.endLabel}</th></tr></thead>`;
+  return `<div class="card"><div class="tools">${fySelect()}${printBtn()}</div>
+    ${fy.to > today() ? `<div class="note noprint">Year in progress, so these are figures to date. Depreciation, accrued FD interest and outstanding expenses are usually booked at year-end.</div>` : ''}
+    ${stmtHead(`Income & Expenditure Account for the year ended ${fy.endLabel}`, 'SCHEDULE - IX (Vide Rule 17(1))')}
+    <div class="cols2">
+      <div><table>${head('EXPENDITURE')}<tbody>${E.rows}${balRow(true)}
+        <tr class="tot"><td class="n">${prev?fmt(bigP):''}</td><td>Total Rs.</td><td></td><td class="n">${fmt(big)}</td></tr></tbody></table></div>
+      <div><table>${head('INCOME')}<tbody>${I.rows}${balRow(false)}
+        <tr class="tot"><td class="n">${prev?fmt(bigP):''}</td><td>Total Rs.</td><td></td><td class="n">${fmt(big)}</td></tr></tbody></table></div>
+    </div></div>`;
+}
+
+/* ------------------------------ Balance Sheet (Schedule VIII) ------------------------------ */
+function bs(){
+  const fy = periodFor(selFY), start = prevDay(fy.from), end = fy.to;
+  const L = [], A = []; let tl = 0, ta = 0, tlp = 0, tap = 0;
+  for (const a of S.accounts.filter(a => a.type === 'fund' && a.id !== 'ie')){
+    const ob = balanceAt(a.id, start), m = movement(a.id, fy.from, end), cb = ob + m.net;
+    L.push([fmt(ob,true), `<b>${esc(a.name)}</b>`, '', '', 'grp']);
+    L.push(['', 'Balance as per last Balance Sheet', fmt(ob), '', 'ind']);
+    if (m.cr) L.push(['', 'Add: Addition during the year', fmt(m.cr), '', 'ind']);
+    if (m.dr) L.push(['', 'Less: Transfers / utilisation', fmt(m.dr), '', 'ind']);
+    L.push(['', '', '', fmt(cb), '']); tl += cb; tlp += ob;
+  }
+  const iob = balanceAt('ie', start), sur = surplus(fy.from, end), iem = movement('ie', fy.from, end), icb = iob + sur + iem.net;
+  L.push([fmt(iob,true), '<b>Income & Expenditure A/c</b>', '', '', 'grp']);
+  L.push(['', 'Opening Balance', fmt(iob), '', 'ind']);
+  L.push(['', `${sur>=0?'Add: Surplus':'Less: Deficit'} during the year`, fmt(Math.abs(sur)), '', 'ind']);
+  if (iem.net) L.push(['', 'Add/(Less): Direct adjustments', fmt(iem.net), '', 'ind']);
+  L.push(['', '', '', fmt(icb), '']); tl += icb; tlp += iob;
+  L.push(['', '<b>Liabilities :-</b>', '', '', 'grp']);
+  let lt = 0;
+  S.accounts.filter(a => a.type === 'liability').forEach(a => { const p = balanceAt(a.id, start), c = balanceAt(a.id, end); lt += c; tlp += p;
+    L.push([fmt(p,true), esc(a.name.replace('Liabilities – ','')), fmt(c), '', 'ind']); });
+  L.push(['', '', '', fmt(lt), '']); tl += lt;
+  for (const g of GROUPS.asset){
+    const list = S.accounts.filter(a => a.type === 'asset' && a.group === g);
+    if (!list.length) continue;
+    A.push(['', `<b>${esc(g)} :-</b>`, '', '', 'grp']);
+    let gt = 0;
+    for (const a of list){
+      const p = balanceAt(a.id, start), c = balanceAt(a.id, end); tap += p; gt += c;
+      if (g === 'Fixed Assets'){
+        const m = movement(a.id, fy.from, end);
+        A.push([fmt(p,true), esc(a.name), fmt(p + m.dr), '', '']);
+        if (m.cr) A.push(['', `Less: Depreciation${a.depRate?` @${a.depRate}%`:''}`, fmt(m.cr), '', 'ind']);
+        A.push(['', '', fmt(c), '', 'ind']);
+      } else A.push([fmt(p,true), esc(a.name), fmt(c), '', 'ind']);
+    }
+    A.push(['', '', '', fmt(gt), '']); ta += gt;
+  }
+  const cell = r => `<tr class="${r[4]==='grp'?'grp':''}"><td class="n muted">${r[0]}</td><td class="${r[4]==='ind'?'ind':''}">${r[1]}</td><td class="n">${r[2]}</td><td class="n">${r[3]}</td></tr>`;
+  const head = t => `<thead><tr><th class="n">${fyRange(selFY-1).endLabel}</th><th>${t}</th><th class="n">Rs.</th><th class="n">${fy.endLabel}</th></tr></thead>`;
+  const diff = tl - ta;
+  return `<div class="card"><div class="tools">${fySelect()}${printBtn()}</div>
+    ${stmtHead(`Balance Sheet As On ${fy.endLabel.replace(/^31-03-/,'31st March, ')}`, 'SCHEDULE - VIII (Vide Rule 17(1))')}
+    <div class="cols2">
+      <div><table>${head('FUNDS & LIABILITIES')}<tbody>${L.map(cell).join('')}
+        <tr class="tot"><td class="n">${fmt(tlp)}</td><td>Total</td><td></td><td class="n">${fmt(tl)}</td></tr></tbody></table></div>
+      <div><table>${head('PROPERTY AND ASSETS')}<tbody>${A.map(cell).join('')}
+        <tr class="tot"><td class="n">${fmt(tap)}</td><td>Total</td><td></td><td class="n">${fmt(ta)}</td></tr></tbody></table></div>
+    </div>
+    <p class="noprint">${diff === 0 ? '<span class="ok">✓ Balance Sheet tallies.</span>' : `<span class="bad">✗ Difference of ₹ ${fmt(diff)}. Check the opening balances under Heads & Backup.</span>`}</p></div>`;
+}
+
+/* ------------------------------ Year-end (treasurer) ------------------------------ */
+function yearend(){
+  const fy = periodFor(selFY);
+  const rows = S.accounts.filter(a => a.type === 'asset' && a.group === 'Fixed Assets').map(a => {
+    const ob = balanceAt(a.id, prevDay(fy.from));
+    const inFY = t => t.date >= fy.from && t.date <= fy.to;
+    const posted = S.txns.filter(t => inFY(t) && t.cr === a.id && t.dr === 'exp_dep').reduce((s,t) => s + t.amount, 0);
+    const adds = S.txns.filter(t => inFY(t) && t.dr === a.id).reduce((s,t) => s + t.amount, 0);
+    const sugg = Math.round(ob * (a.depRate||0) / 100 / 100) * 100;
+    return `<tr><td>${esc(a.name)}</td><td class="n">${a.depRate??'–'}%</td><td class="n">${fmt(ob)}</td><td class="n">${fmt(adds,true)}</td><td class="n">${fmt(posted,true)}</td>
+      <td class="n"><input class="dep" id="dep_${a.id}" data-id="${a.id}" type="number" step="1" min="0" value="${posted?0:sugg/100}" style="max-width:110px;text-align:right"></td></tr>`;
+  }).join('');
+  return `<div class="card"><div class="tools">${fySelect()}</div>
+    <h2>Depreciation for FY ${fy.label}</h2>
+    <p class="muted">Suggested at the rate on the opening written-down value, the method used in the audited 2025-26 accounts (AC 12,713 × 10% = 1,271).
+      For assets bought during the year, ask your CA whether full or half rate applies and type the amount in.</p>
+    <div class="tablewrap"><table><thead><tr><th>Asset</th><th class="n">Rate</th><th class="n">Opening WDV</th><th class="n">Additions</th><th class="n">Already posted</th><th class="n">Post now (₹)</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="row" style="margin-top:10px"><button class="btn" data-act="postDep">Post depreciation entries dated ${fy.endLabel}</button></div>
+  </div>
+  <div class="card"><h2>Other year-end entries (New Entry → Journal)</h2><ul class="help">
+    <li><b>FD interest credited or accrued:</b> Dr <i>FDR with NKGSB</i> (or <i>Accrued Interest on FDR</i> if not yet credited) / Cr <i>Interest on Fixed Deposits</i>.</li>
+    <li><b>TDS deducted by the bank on FD interest:</b> Dr <i>TDS Receivables</i> / Cr <i>Interest on Fixed Deposits</i>. Gross interest = net credited + TDS.</li>
+    <li><b>Last year's accrued interest ₹16,244 when the bank credits it:</b> Dr <i>FDR with NKGSB</i> / Cr <i>Accrued Interest on FDR</i> for that part only. It was already income in 2025-26.</li>
+    <li><b>Expenses due but unpaid on 31 March (e.g. audit fees):</b> Dr <i>Audit Fees</i> / Cr <i>Liabilities – For Expenses</i>. Next year, pay it as a Payment against <i>Liabilities – For Expenses</i>, not as Audit Fees again.</li>
+  </ul></div>`;
+}
+async function postDep(){
+  const fy = periodFor(selFY), made = [];
+  document.querySelectorAll('input.dep').forEach(inp => {
+    const amt = P(inp.value || 0); if (amt <= 0) return;
+    const a = acc(inp.dataset.id);
+    made.push({id:newId(), created:Date.now()+made.length, kind:'journal', vno:nextVoucher('journal', fy.to, made),
+      date:fy.to, dr:'exp_dep', cr:a.id, amount:amt, party:'', ref:'',
+      narration:`Depreciation on ${a.name}${a.depRate?` @${a.depRate}%`:''} for FY ${fy.label}`});
+  });
+  if (!made.length) return toast('Nothing to post.');
+  if (!(await ask(`Post ${made.length} depreciation entries totalling ₹ ${fmt(made.reduce((s,t)=>s+t.amount,0))}, dated ${fy.endLabel}?`, {ok:'Post'}))) return;
+  for (const t of made) saveTxn(t, null);
+  formDirty = false; toast(`Posted ${made.length} depreciation entries.`); render();
+}
+
+/* ------------------------------ Change log ------------------------------ */
+function logView(){
+  const label = {add:'Added', edit:'Edited', delete:'Deleted', settings:'Settings', import:'Imported', members:'Members'};
+  return `<div class="card"><h2>Change log</h2>
+    <p class="muted" style="margin-top:0">Every addition, edit and deletion, with who did it and when. Nobody can change or erase this list.</p>
+    ${logRows.length ? `<div class="tablewrap"><table><thead><tr><th>When</th><th>Who</th><th>What</th><th>Details</th></tr></thead><tbody>
+    ${logRows.map(r => `<tr><td class="d">${new Date(r.at).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})}</td><td>${esc(r.by)}</td>
+      <td class="${r.action==='delete'?'out':''}">${label[r.action]||esc(r.action)}</td>
+      <td>${esc(r.summary)}${r.before&&r.before!==r.summary?`<br><span class="muted small">was: ${esc(r.before)}</span>`:''}</td></tr>`).join('')}
+    </tbody></table></div><p class="muted small">Showing the latest ${logRows.length} changes.</p>` : '<p class="muted">No changes recorded yet.</p>'}</div>`;
+}
+
+/* ------------------------------ Members (treasurer) ------------------------------ */
+function membersView(){
+  return `<div class="card"><h2>Members</h2>
+    <p class="muted" style="margin-top:0">Only these Google accounts can open the books. Use the exact Gmail address each person signs in with.</p>
+    <div class="tablewrap"><table><thead><tr><th>Email</th><th>Role</th><th></th></tr></thead><tbody>
+    ${members.map(m => `<tr><td>${esc(m.email)}${m.email===email()?' <span class="muted">(you)</span>':''}</td>
+      <td>${m.email===email() ? esc(m.role) : `<select id="mr_${esc(m.email)}" data-change="memberRole" data-email="${esc(m.email)}" style="max-width:150px">${ROLES.map(r => `<option ${r===m.role?'selected':''}>${r}</option>`).join('')}</select>`}</td>
+      <td>${m.email===email()?'':`<button class="btn danger sm" data-act="removeMember" data-arg="${esc(m.email)}">Remove</button>`}</td></tr>`).join('')}
+    </tbody></table></div></div>
+  <div class="card"><h2>Add a member</h2>
+    <form id="memberForm" class="form" novalidate>
+      <label>Gmail address<input id="m_email" type="email" autocomplete="off" placeholder="name@gmail.com"></label>
+      <label>Role<select id="m_role">${ROLES.map(r => `<option value="${r}" ${r==='editor'?'selected':''}>${r}</option>`).join('')}</select></label>
+      <div style="align-self:end"><button class="btn" type="submit">Add member</button></div>
+    </form>
+    <ul class="help small muted">${ROLES.map(r => `<li><b>${r}</b>: ${ROLE_HELP[r]}</li>`).join('')}</ul>
+    <p class="small muted">Then send them the link to this page. They tap "Sign in with Google" and choose that Gmail.</p></div>`;
+}
+function addMember(){
+  const e = ($('#m_email').value || '').trim().toLowerCase(), r = $('#m_role').value;
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) return toast('Enter a valid email address.');
+  formDirty = false;
+  commit(b => { b.set(doc(db, 'members', e), {role:r, addedBy:email(), addedAt:Date.now()}); logEntry(b, 'members', {summary:`Added ${e} as ${r}`}); }, `Added ${e}.`);
+  render();
+}
+function setMemberRole(e, r){
+  commit(b => { b.set(doc(db, 'members', e), {role:r, addedBy:email(), addedAt:Date.now()}); logEntry(b, 'members', {summary:`Changed ${e} to ${r}`}); }, `${e} is now ${r}.`);
+}
+async function removeMember(e){
+  if (!(await ask(`Remove <b>${esc(e)}</b>? They will lose access straight away.`, {ok:'Remove', danger:true}))) return;
+  commit(b => { b.delete(doc(db, 'members', e)); logEntry(b, 'members', {summary:`Removed ${e}`}); }, `Removed ${e}.`);
+}
+
+/* ------------------------------ Settings / backup ------------------------------ */
+function settings(){
+  const bal = S.accounts.filter(a => a.type!=='income' && a.type!=='expense');
+  const dr = bal.filter(debitNature).reduce((s,a)=>s+a.opening,0), cr = bal.filter(a=>!debitNature(a)).reduce((s,a)=>s+a.opening,0);
+  const used = id => S.txns.some(t => t.dr===id || t.cr===id);
+  const T = isTreasurer();
+  return `<div class="card"><h2>Backup</h2>
+    <p>Entries are saved to the Samajam's Firebase database and appear on every signed-in device. Still keep your own copy once a month.</p>
+    <div class="row">
+      <button class="btn" data-act="exportJSON">Download backup (.json)</button>
+      <button class="btn ghost" data-act="exportCSV">Export all entries (CSV for the CA)</button>
+      ${T ? `<label class="btn ghost" style="flex-direction:row;color:var(--accent)">Import / restore a backup<input type="file" accept=".json,application/json" data-change="restore" hidden></label>` : ''}</div>
+    <p class="muted small">Last backup: ${S.lastBackup ? new Date(S.lastBackup).toLocaleString('en-IN') : 'never'}. ${T?'Import replaces every entry with the ones in the backup file, for everyone. Use it to bring over entries from the claude.ai version.':''}</p></div>
+  ${T ? `<div class="card"><h2>Add a new head</h2>
+    <form id="headForm" class="form" novalidate>
+      <label>Name<input id="h_name" placeholder="e.g. Membership Fees"></label>
+      <label>Type<select id="h_type" data-change="hType">${Object.entries(TYPE_LABEL).map(([k,v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
+      <label>Group (statement line)<select id="h_group">${GROUPS.fund.map(g=>`<option>${esc(g)}</option>`).join('')}</select></label>
+      <label>Depreciation % (fixed assets only)<input id="h_dep" type="number" step="0.01" min="0"></label>
+      <div><button class="btn" type="submit">Add head</button></div>
+    </form></div>` : ''}
+  <div class="card"><h2>Opening balances as on ${dmy(prevDay(S.org.openingDate))}</h2>
+    <p class="muted">Pre-filled from the audited Balance Sheet (Malvika & Associates, dated 22-08-2026). Home Theatre is ₹106 (142 − 36 depreciation). The printed ₹107 is a ₹1 slip that made the printed asset side add to ₹11,92,724.</p>
+    <div class="tablewrap"><table><thead><tr><th>Head</th><th>Type</th><th>Group</th><th class="n">Opening (₹)</th><th></th></tr></thead><tbody>
+    ${S.accounts.map(a => `<tr><td>${T?`<input id="nm_${a.id}" data-change="rename" data-id="${a.id}" value="${esc(a.name)}">`:esc(a.name)}</td><td>${TYPE_LABEL[a.type]}</td><td class="muted">${esc(a.group)}${a.depRate?` · ${a.depRate}%`:''}</td>
+      <td class="n">${a.type==='income'||a.type==='expense'?'<span class="muted">–</span>':T?`<input id="op_${a.id}" type="number" step="0.01" value="${a.opening/100}" style="max-width:130px;text-align:right" data-change="opening" data-id="${a.id}">`:fmt(a.opening)}</td>
+      <td>${!T||a.system||used(a.id)?'':`<button class="btn danger sm" data-act="delHead" data-arg="${a.id}">Remove</button>`}</td></tr>`).join('')}
+    <tr class="tot"><td colspan="3">Assets ₹ ${fmt(dr)} vs Funds & Liabilities ₹ ${fmt(cr)}</td><td class="n">${dr===cr?'<span class="ok">Tallies</span>':`<span class="bad">Diff ${fmt(dr-cr)}</span>`}</td><td></td></tr>
+    </tbody></table></div></div>`;
+}
+function addHead(){
+  const name = $('#h_name').value.trim(), type = $('#h_type').value, group = $('#h_group').value, dep = parseFloat($('#h_dep').value);
+  if (!name) return toast('Give the head a name.');
+  const id = type.slice(0,3) + '_' + name.toLowerCase().replace(/[^a-z0-9]+/g,'_').slice(0,20) + '_' + Date.now().toString(36).slice(-4);
+  const a = {id, name, type, group, opening:0};
+  if (group === 'Fixed Assets' && dep > 0) a.depRate = dep;
+  S.accounts = [...S.accounts, a];
+  formDirty = false; saveConfig(`Added head "${name}" (${TYPE_LABEL[type]}, ${group})`); toast(`Added "${name}".`); render();
+}
+function renameHead(id, v){
+  if (!v.trim()) return;
+  const old = accName(id);
+  S.accounts = S.accounts.map(a => a.id === id ? {...a, name:v.trim()} : a);
+  formDirty = false; saveConfig(`Renamed head "${old}" to "${v.trim()}"`); if (deferred) render();
+}
+function setOpening(id, v){
+  const a0 = acc(id), nv = P(v || 0);
+  S.accounts = S.accounts.map(a => a.id === id ? {...a, opening:nv} : a);
+  formDirty = false; saveConfig(`Opening balance of "${a0.name}" changed from ₹${fmt(a0.opening)} to ₹${fmt(nv)}`); render();
+}
+async function delHead(id){
+  if (!(await ask(`Remove head "${esc(accName(id))}"?`, {ok:'Remove', danger:true}))) return;
+  const name = accName(id);
+  S.accounts = S.accounts.filter(a => a.id !== id); saveConfig(`Removed head "${name}"`); render();
+}
+function setupBooks(){
+  S.org = structuredClone(DEFAULT_ORG); S.accounts = structuredClone(DEFAULT_ACCOUNTS);
+  saveConfig('Set up books with audited opening balances as on 31-03-2026');
+}
+function saveFile(filename, data, type){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([data], {type})); a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function exportJSON(){
+  saveFile(`odakkuzhal-books-${today()}.json`, JSON.stringify({version:2, org:S.org, accounts:S.accounts, txns:sortedTxns()}, null, 1), 'application/json');
+  if (isTreasurer()){ S.lastBackup = Date.now(); saveConfig(null); }
+  toast('Backup downloaded.');
+}
+function exportCSV(){
+  const q = v => `"${String(v ?? '').replace(/"/g,'""')}"`;
+  const rows = [['Date','Voucher','Type','Debit head','Credit head','Amount','Party','Ref','Narration','Entered by','Last edited by']];
+  sortedTxns().forEach(t => rows.push([dmy(t.date), t.vno, t.kind, accName(t.dr), accName(t.cr), (t.amount/100).toFixed(2), t.party, t.ref, t.narration, t.createdBy, t.lastEditedBy]));
+  saveFile(`odakkuzhal-transactions-${today()}.csv`, rows.map(r => r.map(q).join(',')).join('\r\n'), 'text/csv');
+}
+async function importJSON(file){
+  if (!file) return;
+  let d;
+  try { d = JSON.parse(await file.text()); if (!Array.isArray(d.accounts) || !Array.isArray(d.txns)) throw new Error('not a backup file'); }
+  catch(e){ return toast('That file is not an Odakkuzhal backup.'); }
+  if (!(await ask(`Replace all ${S.txns.length} current entries and the opening balances with the ${d.txns.length} entries in this backup? This changes the books for everyone.`, {ok:'Replace', danger:true, typeWord:'REPLACE'}))) return;
+  const keep = new Set(d.txns.map(t => t.id).filter(Boolean));
+  const ops = [];
+  for (const t of S.txns) if (!keep.has(t.id)) ops.push(b => b.delete(doc(db, 'txns', t.id)));
+  for (const raw of d.txns){
+    const id = raw.id || newId();
+    const rec = {...raw, createdBy: raw.createdBy || email(), lastEditedBy: email(), updated: Date.now()};
+    delete rec.id;
+    ops.push(b => b.set(doc(db, 'txns', id), rec));
+  }
+  ops.push(b => b.set(doc(db, 'books', 'config'), {org: d.org || S.org, accounts: d.accounts, lastBackup: S.lastBackup ?? null, updatedAt: Date.now(), updatedBy: email()}));
+  let ok = true;
+  for (let i = 0; i < ops.length; i += 400){
+    const chunk = ops.slice(i, i + 400);
+    const last = i + 400 >= ops.length;
+    ok = (await commit(b => { chunk.forEach(f => f(b)); if (last) logEntry(b, 'import', {summary:`Imported backup "${file.name}" with ${d.txns.length} entries`}); })) && ok;
+  }
+  toast(ok ? `Imported ${d.txns.length} entries.` : 'Some of the import failed. Run it again.');
+}
+
+/* ------------------------------ help ------------------------------ */
+function help(){
+  const r = (what, how) => `<tr><td>${what}</td><td>${how}</td></tr>`;
+  return `<div class="card"><h2>How to record common transactions</h2>
+  <div class="tablewrap"><table><thead><tr><th>What happened</th><th>Record as</th></tr></thead><tbody>
+  ${r('Donation / contribution received in cash','Receipt → Cash → <i>Donation in Bank or Kind</i>')}
+  ${r('Donation received by UPI / cheque / NEFT','Receipt → Bank → <i>Donation in Bank or Kind</i>')}
+  ${r('Corpus donation (donor says it is for corpus)','Receipt → <i>Trust Funds or Corpus</i> (not income)')}
+  ${r('Donation earmarked for the building','Receipt → <i>Building Fund</i>')}
+  ${r('Refundable deposit taken (e.g. hall booking)','Receipt → <i>Liabilities – For Deposits</i>; refund it as a Payment against the same head')}
+  ${r('You deposit cash in NKGSB','Cash ⇄ Bank → Deposit cash into bank')}
+  ${r('You withdraw cash from NKGSB','Cash ⇄ Bank → Withdraw cash from bank')}
+  ${r('Electricity / water / society (Sai Nagar CHS) bill','Payment → <i>Electricity Charges</i> / <i>Water Charges</i> / <i>Sai Nagar CHS Ltd</i>')}
+  ${r('Onam / AGM / programme expenses','Payment → <i>Misc Expenditure (AGM)</i> or <i>Project Operation Expenses</i>')}
+  ${r('Charity / help given to a person','Payment → <i>Other Charitable Objects</i>')}
+  ${r('Audit fee ₹6,490 for 2025-26 (already provided last year)','Payment → <i>Liabilities – For Expenses</i>. Do <b>not</b> use Audit Fees, or it is counted twice.')}
+  ${r('Bank charges debited in passbook','Payment → Bank → <i>Bank Charges</i>')}
+  ${r('SB interest credited in passbook','Receipt → Bank → <i>Interest on Savings Bank Account</i>')}
+  ${r('Income-tax refund received','Receipt → Bank → <i>TDS Receivables</i> for the tax part, and a second Receipt → <i>Interest on Income Tax Refund</i> for the interest part')}
+  ${r('Buying an AC / furniture / instrument','Payment → the fixed-asset head (not an expense)')}
+  ${r('New FD made from bank / FD matured into bank','Payment → <i>FDR with NKGSB</i> / Receipt → <i>FDR with NKGSB</i>')}
+  ${r('Interest added to FD, TDS, depreciation','Journal – see the Year-end tab (treasurer)')}
+  </tbody></table></div>
+  <h3>Good habits</h3><ul class="help">
+    <li>Write the voucher number shown after saving on every bill and receipt, and file them in order.</li>
+    <li>Every month: Bank Book closing must equal the passbook; Cash Book closing must equal the cash physically with you.</li>
+    <li>Keep Samajam cash separate from personal money. If you pay from your own pocket, record it only when reimbursed.</li>
+  </ul></div>`;
+}
+
+render();
+</script>
+</body>
+</html>
