@@ -437,6 +437,7 @@ document.addEventListener('change', e => {
   else if (k === 'opening'){ setOpening(t.dataset.id, t.value); }
   else if (k === 'hType'){ $('#h_group').innerHTML = GROUPS[t.value].map(g => `<option>${esc(g)}</option>`).join(''); }
   else if (k === 'restore'){ importJSON(t.files[0]); t.value = ''; }
+  else if (k === 'addFile'){ addEntriesFromFile(t.files[0]); t.value = ''; }
   else if (k === 'memberRole'){ setMemberRole(t.dataset.email, t.value); }
 });
 document.addEventListener('submit', e => {
@@ -925,6 +926,7 @@ function settings(){
     <div class="row">
       <button class="btn" data-act="exportJSON">Download backup (.json)</button>
       <button class="btn ghost" data-act="exportCSV">Export all entries (CSV for the CA)</button>
+      ${T ? `<label class="btn ghost" style="flex-direction:row;color:var(--accent)">Add entries from a file<input type="file" accept=".json,application/json" data-change="addFile" hidden></label>` : ''}
       ${T ? `<label class="btn ghost" style="flex-direction:row;color:var(--accent)">Import / restore a backup<input type="file" accept=".json,application/json" data-change="restore" hidden></label>` : ''}</div>
     <p class="muted small">Last backup: ${S.lastBackup ? new Date(S.lastBackup).toLocaleString('en-IN') : 'never'}. ${T?'Import replaces every entry with the ones in the backup file, for everyone. Use it to bring over entries from the claude.ai version.':''}</p></div>
   ${T ? `<div class="card"><h2>Add a new head</h2>
@@ -1013,6 +1015,41 @@ async function importJSON(file){
     ok = (await commit(b => { chunk.forEach(f => f(b)); if (last) logEntry(b, 'import', {summary:`Imported backup "${file.name}" with ${d.txns.length} entries`}); })) && ok;
   }
   toast(ok ? `Imported ${d.txns.length} entries.` : 'Some of the import failed. Run it again.');
+}
+
+/* Add entries prepared outside the app (e.g. from a bank statement) without touching existing ones.
+   File: {kind:'odakkuzhal-entries', heads:[...new heads], txns:[{id,date,kind,dr,cr,amount,party,ref,narration}]}.
+   Entries whose id is already in the books are skipped, so importing the same file twice is harmless. */
+async function addEntriesFromFile(file){
+  if (!file) return;
+  let d;
+  try { d = JSON.parse(await file.text()); if (d.kind !== 'odakkuzhal-entries' || !Array.isArray(d.txns)) throw new Error(); }
+  catch(e){ return toast('That file is not an Odakkuzhal entries file.'); }
+  const newHeads = (d.heads || []).filter(h => h && h.id && !acc(h.id));
+  const known = id => acc(id) || newHeads.some(h => h.id === id);
+  const have = new Set(S.txns.map(t => t.id));
+  const fresh = d.txns.filter(t => t.id && !have.has(t.id));
+  const bad = fresh.filter(t => !known(t.dr) || !known(t.cr) || !(t.amount > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(t.date || '') || t.date < S.org.openingDate);
+  if (bad.length) return toast(`The file has ${bad.length} entries with an unknown head, bad date or amount. Nothing was added.`);
+  if (!fresh.length) return toast(`All ${d.txns.length} entries in this file are already in the books.`);
+  const sum = f => fmt(fresh.filter(f).reduce((s,t) => s + t.amount, 0));
+  const dates = fresh.map(t => t.date).sort();
+  if (!(await ask(`Add <b>${fresh.length}</b> entries dated ${dmy(dates[0])} to ${dmy(dates[dates.length-1])}?<br>
+      <span class="muted small">Money in: ₹ ${sum(t => isMoney(t.dr) && !isMoney(t.cr))} · Money out: ₹ ${sum(t => isMoney(t.cr) && !isMoney(t.dr))}
+      ${d.txns.length - fresh.length ? ` · ${d.txns.length - fresh.length} already in the books will be skipped` : ''}
+      ${newHeads.length ? `<br>New heads: ${newHeads.map(h => esc(h.name)).join(', ')}` : ''}</span>`, {ok:'Add entries'}))) return;
+  const made = [];
+  fresh.sort((a,b) => a.date.localeCompare(b.date)).forEach((t, i) => {
+    made.push({id:t.id, created:Date.now() + i, kind:t.kind, vno:nextVoucher(t.kind, t.date, made), date:t.date,
+      dr:t.dr, cr:t.cr, amount:Math.round(t.amount), party:t.party || '', ref:t.ref || '', narration:t.narration || ''});
+  });
+  if (newHeads.length){ S.accounts = [...S.accounts, ...newHeads.map(h => ({...h, opening:0}))]; }
+  const ok = await commit(b => {
+    if (newHeads.length) b.set(doc(db, 'books', 'config'), {org:S.org, accounts:S.accounts, lastBackup:S.lastBackup ?? null, updatedAt:Date.now(), updatedBy:email()});
+    made.forEach(t => { const rec = {...t, createdBy:email(), lastEditedBy:email(), updated:Date.now()}; delete rec.id; b.set(doc(db, 'txns', t.id), rec); });
+    logEntry(b, 'import', {summary:`Added ${made.length} entries from "${file.name}"${newHeads.length ? ` and ${newHeads.length} new head(s)` : ''}`});
+  });
+  toast(ok ? `Added ${made.length} entries.` : 'Nothing was added. Check your connection and try again.');
 }
 
 /* ------------------------------ help ------------------------------ */
